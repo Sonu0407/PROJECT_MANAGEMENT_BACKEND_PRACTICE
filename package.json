@@ -1,0 +1,17 @@
+{
+  "name": "project_management_backend_practice",
+  "version": "1.0.0",
+  "description": "a project management application and backend practice like blueprint",
+  "keywords": [
+    "Backend",
+    "Blueprint",
+    "Udemy"
+  ],
+  "license": "ISC",
+  "author": "Sonu S",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node index.js"
+  }
+}
