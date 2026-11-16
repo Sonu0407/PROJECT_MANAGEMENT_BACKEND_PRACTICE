@@ -54,7 +54,7 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   const createdUser = await User.findById(user._id).select(
-    "-password -refreshToken -emailVerificationToken -emailVerificationExpiry",
+    "-password -emailVerificationToken -emailVerificationExpiry",
   );
 
   if (!createdUser) {

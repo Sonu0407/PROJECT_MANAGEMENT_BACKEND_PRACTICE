@@ -85,7 +85,7 @@ userSchema.methods.generateAccessToken = function () {
 };
 
 userSchema.methods.generateRefreshToken = function () {
-  jwt.sign(
+  return jwt.sign(
     {
       id: this._id, // Best practice in refresh token keep payload as short as possible.
       // email: this.email,
