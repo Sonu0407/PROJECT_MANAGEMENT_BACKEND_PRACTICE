@@ -18,6 +18,8 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
       "-password -refreshToken -emailVerificationToken -emailVerificationExpiry",
     );
 
+    console.log("User: ", user);
+
     if (!user) {
       throw new ApiError(401, "Invalid access token");
     }
