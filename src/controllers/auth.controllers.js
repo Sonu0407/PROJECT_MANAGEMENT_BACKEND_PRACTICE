@@ -146,4 +146,95 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "User logged out"));
 });
 
-export { registerUser, login, logoutUser };
+const getCurrentUser = asyncHandler(async (req, res) => {
+  return res
+    .status(200)
+    .json(new ApiResponse(200, req.user, "Current user fetched successfully"));
+});
+
+const verifyEmail = asyncHandler(async (req, res) => {
+  const { verificationToken } = req.params;
+
+  if (!verificationToken) {
+    throw new ApiError(400, "Email verification token is missing");
+  }
+
+  //hash verificationToken
+  let hashedToken = crypto
+    .create("sha256")
+    .update(verificationToken)
+    .digest("hex");
+
+  //will be same token after hashing as in the database
+  const user = await User.findOne({
+    emailVerificationToken: hashedToken,
+    emailVerificationExpiry: { $gt: Date.now() }, //$gt means greater than
+  });
+
+  if (!user) {
+    throw new ApiError(400, "Token is invalid or expired");
+  }
+
+  //remove data for security reasons
+  user.emailVerificationToken = undefined;
+  user.emailVerificationExpiry = undefined;
+
+  user.isEmailVerified = true;
+  await user.save({ validateBeforeSave: false });
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        isEmailVerified: true,
+      },
+      "Email is verified",
+    ),
+  );
+});
+
+const resendEmailVerification = asyncHandler(async (req, res) => {
+  const user = User.findById(req.user?._id);
+
+  if (!user) {
+    throw new ApiError(404, "User does not exist");
+  }
+
+  if (user.isEmailVerified) {
+    throw new ApiError(409, "Email is already verified");
+  }
+
+  const { unHashedToken, hashedToken, tokenExpiry } =
+    user.generateTemporaryToken();
+
+  user.emailVerificationToken = hashedToken;
+  user.emailVerificationExpiry = tokenExpiry;
+
+  await user.save({ validateBeforeSave: false });
+
+  await sendEmail({
+    email: user?.email,
+    subject: "Please verify your email.com",
+    mailgenContent: emailVerificationMailgenContent(
+      user.username,
+      `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`,
+    ),
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Mail has been sent to your email ID"));
+});
+
+// const refreshAccessToken = asyncHandler (async (req, res) => {
+
+// })
+
+export {
+  registerUser,
+  login,
+  logoutUser,
+  getCurrentUser,
+  verifyEmail,
+  resendEmailVerification,
+};
